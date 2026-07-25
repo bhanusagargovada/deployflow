@@ -20,12 +20,8 @@ def create_app(config_class=None):
     bcrypt.init_app(app)
     login_manager.init_app(app)
 
-    # Rate limiting: prefer Redis storage when REDIS_URL is configured
-    redis_url = app.config.get('REDIS_URL') or app.config.get('REDIS_URI') or None
-    limiter_args = dict(key_func=get_remote_address, default_limits=["200 per day", "50 per hour", "10 per minute"])
-    if redis_url:
-        limiter_args['storage_uri'] = redis_url
-    limiter = Limiter(**limiter_args)
+    # Rate limiting (in-memory storage by default)
+    limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour", "10 per minute"])
     limiter.init_app(app)
 
     # Register blueprints
