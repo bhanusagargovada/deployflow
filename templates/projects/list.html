@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Projects - Project Tracker{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Projects</h3>
+  <a class="btn btn-primary" href="{{ url_for('projects.create_project') }}">Create Project</a>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-4"><input name="q" value="{{ request.args.get('q','') }}" class="form-control" placeholder="Search projects"></div>
+  <div class="col-md-2"><select name="status" class="form-select"><option value="">All Status</option><option>Planned</option><option>Active</option><option>Completed</option><option>On Hold</option></select></div>
+  <div class="col-md-2"><select name="priority" class="form-select"><option value="">All Priority</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+
+<table class="table table-striped">
+  <thead><tr><th>Name</th><th>Manager</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for p in items %}
+    <tr>
+      <td>{{ p.name }}</td>
+      <td>{{ p.owner.username if p.owner else '—' }}</td>
+      <td>{{ p.status }}</td>
+      <td>
+        <a href="{{ url_for('projects.edit_project', project_id=p.id) }}" class="btn btn-sm btn-secondary">Edit</a>
+        <form method="post" action="{{ url_for('projects.delete_project', project_id=p.id) }}" style="display:inline-block;">
+          <button class="btn btn-sm btn-danger" onclick="return confirm('Delete project?')">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">No projects found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Pagination -->
+{% if pages and pages > 1 %}
+<nav>
+  <ul class="pagination">
+    {% for pagenum in range(1, pages+1) %}
+      <li class="page-item {% if pagenum==page %}active{% endif %}"><a class="page-link" href="?page={{ pagenum }}">{{ pagenum }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Record Release{% endblock %}
+{% block content %}
+<h3>Record Release</h3>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">{{ form.version.label }}{{ form.version(class_='form-control') }}</div>
+  <div class="mb-3">{{ form.release_date.label }}{{ form.release_date(class_='form-control') }}</div>
+  <div class="mb-3">{{ form.notes.label }}{{ form.notes(class_='form-control', rows=4) }}</div>
+  <div class="mb-3">{{ form.status.label }}{{ form.status(class_='form-select') }}</div>
+  <div class="mb-3">{{ form.released_by.label }}{{ form.released_by(class_='form-control') }}</div>
+  <button class="btn btn-success">Save</button>
+</form>
+{% endblock %}

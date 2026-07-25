@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div>
+    <a class="btn btn-outline-secondary btn-sm" href="?filter=all">All</a>
+    <a class="btn btn-outline-secondary btn-sm" href="?filter=unread">Unread</a>
+    <a class="btn btn-outline-secondary btn-sm" href="?filter=read">Read</a>
+  </div>
+  <div>
+    <form method="post" action="{{ url_for('notifications.mark_all_read') }}" style="display:inline">
+      <button class="btn btn-sm btn-outline-primary">Mark all read</button>
+    </form>
+    <form method="post" action="{{ url_for('notifications.send_digest') }}" style="display:inline">
+      <button class="btn btn-sm btn-outline-info">Send digest</button>
+    </form>
+  </div>
+</div>
+
+<ul class="list-group">
+  {% for n in notifications %}
+  <li class="list-group-item {% if not n.is_read %}fw-bold{% endif %}">
+    {{ n.message }} <small class="text-muted">{{ n.created_at }}</small>
+    {% if n.link %} - <a href="{{ n.link }}">Open</a>{% endif %}
+    {% if not n.is_read %}
+    <form method="post" action="{{ url_for('notifications.mark_read', notif_id=n.id) }}" style="display:inline-block; margin-left:8px;">
+      <button class="btn btn-sm btn-outline-secondary">Mark read</button>
+    </form>
+    {% endif %}
+  </li>
+  {% else %}
+  <li class="list-group-item">No notifications</li>
+  {% endfor %}
+</ul>
+{% endblock %}

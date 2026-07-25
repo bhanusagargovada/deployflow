@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Reports - Project Tracker{% endblock %}
+{% block content %}
+<h3>Reports</h3>
+<p>Generate PDF reports for projects.</p>
+<ul>
+  {% for p in [] %}
+  <li>{{ p.name }} - <a href="{{ url_for('reports.project_pdf', project_id=p.id) }}">Download PDF</a></li>
+  {% endfor %}
+  <li>No projects available in this demo. Use Projects → Create to add one.</li>
+</ul>
+{% endblock %}

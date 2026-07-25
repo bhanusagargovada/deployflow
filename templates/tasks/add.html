@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Create Task{% endblock %}
+{% block content %}
+<h3>Create Task</h3>
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">{{ form.title.label }}{{ form.title(class_='form-control') }}</div>
+  <div class="mb-3">{{ form.description.label }}{{ form.description(class_='form-control', rows=4) }}</div>
+  <div class="row">
+    <div class="col-md-4 mb-3">{{ form.priority.label }}{{ form.priority(class_='form-select') }}</div>
+    <div class="col-md-4 mb-3">{{ form.deadline.label }}{{ form.deadline(class_='form-control') }}</div>
+    <div class="col-md-4 mb-3">{{ form.assigned_to.label }}{{ form.assigned_to(class_='form-control') }}</div>
+  </div>
+  <button class="btn btn-success">Create</button>
+</form>
+{% endblock %}

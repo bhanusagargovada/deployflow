@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Project Tracker{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Total Projects</h5>
+        <h3>{{ stats.total_projects }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Active Projects</h5>
+        <h3>{{ stats.active_projects }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Pending Tasks</h5>
+        <h3>{{ stats.pending_tasks }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5>Total Users</h5>
+        <h3>{{ stats.total_users }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <canvas id="projectStatusChart"></canvas>
+  </div>
+  <div class="col-md-6">
+    <canvas id="monthlyProjectsChart"></canvas>
+  </div>
+</div>
+<div class="row mt-4">
+  <div class="col-md-6">
+    <canvas id="taskCompletionChart"></canvas>
+  </div>
+  <div class="col-md-6">
+    <canvas id="userProductivityChart"></canvas>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <h5>Recent Releases</h5>
+    <ul class="list-group">
+      <li class="list-group-item">No releases yet</li>
+    </ul>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// example Chart.js placeholder
+const ctx = document.getElementById('projectStatusChart');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: ['Planned','Active','Completed'], datasets: [{ data: [1,1,0], backgroundColor: ['#6c757d','#0d6efd','#198754'] }] }
+  });
+}
+</script>
+{% endblock %}

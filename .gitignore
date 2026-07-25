@@ -1,0 +1,10 @@
+.env
+*.pyc
+__pycache__/
+.venv/
+venv/
+instance/
+*.sqlite3
+dev.db
+/.migrations
+migrations/versions/*.py

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Task - {{ task.title }}{% endblock %}
+{% block content %}
+<h3>{{ task.title }}</h3>
+<p>{{ task.description }}</p>
+<p><strong>Status:</strong> {{ task.status }} | <strong>Progress:</strong> {{ task.progress }}%</p>
+
+<hr>
+<h5>Comments</h5>
+<form method="post" action="{{ url_for('comments.create_comment') }}">
+  {{ form.hidden_tag() }}
+  {{ form.content(class_='form-control', rows=3) }}
+  {{ form.task_id }}
+  <button class="btn btn-primary mt-2">Post Comment</button>
+</form>
+
+<ul class="list-unstyled mt-3">
+  {% for c in comments %}
+  <li class="mb-3">
+    <div><strong>{{ c.user.username if c.user else 'User' }}</strong> <small class="text-muted">{{ c.created_at }}</small></div>
+    <div>{{ c.content }}</div>
+    <div class="mt-2">
+      <button class="btn btn-link btn-sm reply-toggle" data-comment-id="{{ c.id }}">Reply</button>
+    </div>
+    <form method="post" action="{{ url_for('comments.create_comment') }}" class="reply-form mt-2" id="reply-form-{{ c.id }}" style="display:none;">
+      {{ form.hidden_tag() }}
+      {{ form.content(class_='form-control', rows=2) }}
+      <input type="hidden" name="parent_id" value="{{ c.id }}">
+      {{ form.task_id }}
+      <button class="btn btn-primary btn-sm mt-2">Post Reply</button>
+    </form>
+    {% for r in c.replies.order_by(c.replies.property.mapper.class_.created_at.asc()) %}
+      <div class="ms-4 mt-2">
+        <strong>{{ r.user.username if r.user else 'User' }}</strong> <small class="text-muted">{{ r.created_at }}</small>
+        <div>{{ r.content }}</div>
+      </div>
+    {% endfor %}
+  </li>
+  {% else %}
+  <li>No comments yet.</li>
+  {% endfor %}
+</ul>
+
+{% if pages > 1 %}
+<nav aria-label="Comment pagination">
+  <ul class="pagination">
+    <li class="page-item {% if page <= 1 %}disabled{% endif %}"><a class="page-link" href="?page={{ page-1 }}">Previous</a></li>
+    <li class="page-item disabled"><span class="page-link">Page {{ page }} / {{ pages }}</span></li>
+    <li class="page-item {% if page >= pages %}disabled{% endif %}"><a class="page-link" href="?page={{ page+1 }}">Next</a></li>
+  </ul>
+</nav>
+{% endif %}
+
+{% endblock %}
