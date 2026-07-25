@@ -3,6 +3,8 @@ from config import DevelopmentConfig
 from database import db, migrate, bcrypt, login_manager
 from flask import after_this_request
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 
 def create_app(config_class=None):
@@ -17,6 +19,14 @@ def create_app(config_class=None):
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+
+    # Rate limiting: prefer Redis storage when REDIS_URL is configured
+    redis_url = app.config.get('REDIS_URL') or app.config.get('REDIS_URI') or None
+    limiter_args = dict(key_func=get_remote_address, default_limits=["200 per day", "50 per hour", "10 per minute"])
+    if redis_url:
+        limiter_args['storage_uri'] = redis_url
+    limiter = Limiter(**limiter_args)
+    limiter.init_app(app)
 
     # Register blueprints
     try:
@@ -61,6 +71,8 @@ def create_app(config_class=None):
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
         response.headers['X-XSS-Protection'] = '1; mode=block'
+        # Content Security Policy (allow scripts/styles from self and common CDNs used)
+        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com;"
         return response
 
     # If app is behind a proxy

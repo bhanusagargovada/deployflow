@@ -20,11 +20,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-Run with Docker Compose (production-like):
-
-```bash
-docker-compose up --build
-```
+Additional notes: this project no longer includes Docker artifacts. Run the app locally using the Python instructions above.
 
 Additional features implemented:
 
