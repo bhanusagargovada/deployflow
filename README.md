@@ -20,6 +20,12 @@ pip install -r requirements.txt
 python run.py
 ```
 
+Run with Docker Compose (production-like):
+
+```bash
+docker-compose up --build
+```
+
 Additional features implemented:
 
 - Authentication (register, login, logout, forgot/reset password)

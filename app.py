@@ -1,6 +1,8 @@
 from flask import Flask
 from config import DevelopmentConfig
 from database import db, migrate, bcrypt, login_manager
+from flask import after_this_request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def create_app(config_class=None):
@@ -51,6 +53,18 @@ def create_app(config_class=None):
 
     # error handlers
     from flask import render_template
+
+    # Security headers
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        return response
+
+    # If app is behind a proxy
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     @app.errorhandler(404)
     def not_found(e):

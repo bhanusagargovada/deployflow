@@ -1,6 +1,6 @@
 from flask import Blueprint, send_file, request
 from flask_login import login_required
-from io import StringIO
+from io import BytesIO, StringIO
 import csv
 from models.project import Project
 from models.task import Task
@@ -15,11 +15,15 @@ exports_bp = Blueprint('exports', __name__, url_prefix='/exports', template_fold
 @role_required([Role.ADMIN, Role.PM])
 def projects_csv():
     projects = Project.query.order_by(Project.created_at.desc()).all()
-    si = StringIO()
-    cw = csv.writer(si)
-    cw.writerow(['id', 'name', 'status', 'priority', 'deadline', 'manager_id', 'created_at'])
+    # Build CSV in a text buffer, then encode to bytes for send_file
+    text_buf = StringIO()
+    writer = csv.writer(text_buf)
+    writer.writerow(['id', 'name', 'status', 'priority', 'deadline', 'manager_id', 'created_at'])
     for p in projects:
-        cw.writerow([p.id, p.name, p.status, p.priority, p.deadline, p.manager_id, p.created_at])
+        writer.writerow([p.id, p.name, p.status, p.priority, p.deadline, p.manager_id, p.created_at])
+    text_buf.seek(0)
+    csv_bytes = text_buf.getvalue().encode('utf-8')
+    si = BytesIO(csv_bytes)
     si.seek(0)
     return send_file(si, mimetype='text/csv', download_name='projects.csv', as_attachment=True)
 
@@ -29,10 +33,13 @@ def projects_csv():
 @role_required([Role.ADMIN, Role.PM])
 def tasks_csv():
     tasks = Task.query.order_by(Task.created_at.desc()).all()
-    si = StringIO()
-    cw = csv.writer(si)
-    cw.writerow(['id', 'title', 'status', 'priority', 'progress', 'project_id', 'assigned_to', 'created_at'])
+    text_buf = StringIO()
+    writer = csv.writer(text_buf)
+    writer.writerow(['id', 'title', 'status', 'priority', 'progress', 'project_id', 'assigned_to', 'created_at'])
     for t in tasks:
-        cw.writerow([t.id, t.title, t.status, t.priority, t.progress, t.project_id, t.assigned_to, t.created_at])
+        writer.writerow([t.id, t.title, t.status, t.priority, t.progress, t.project_id, t.assigned_to, t.created_at])
+    text_buf.seek(0)
+    csv_bytes = text_buf.getvalue().encode('utf-8')
+    si = BytesIO(csv_bytes)
     si.seek(0)
     return send_file(si, mimetype='text/csv', download_name='tasks.csv', as_attachment=True)
