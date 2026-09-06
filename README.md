@@ -1,4 +1,6 @@
-# Project Management & Deployment Tracking System
+# DeployFlow
+
+Intelligent Project & Deployment Management Platform
 
 A professional Flask application for managing projects, tasks, releases, users and reports.
 
@@ -12,13 +14,15 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-2. Copy `.env.example` to `.env` and update values.
-3. Initialize the database and run migrations.
+2. Set `DATABASE_URI` in `.env` for MySQL, or omit it to use the local SQLite database at `instance/deployflow.db`.
+3. Initialize the database and run migrations when using a configured database.
 4. Run the app:
 
 ```bash
 python run.py
 ```
+
+When using the default local SQLite database, `run.py` creates the tables automatically. Configured MySQL databases should be initialized with the migration commands below.
 
 Additional notes: this project no longer includes Docker artifacts. Run the app locally using the Python instructions above.
 

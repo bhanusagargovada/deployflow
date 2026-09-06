@@ -26,6 +26,10 @@ class User(db.Model, UserMixin):
 
     projects = db.relationship('Project', backref='owner', lazy=True)
     activities = db.relationship('ActivityLog', backref='user', lazy=True)
+    status_reports_submitted = db.relationship('StatusReport', foreign_keys='StatusReport.submitted_by', backref='submitter', lazy='dynamic')
+    status_reports_reviewed = db.relationship('StatusReport', foreign_keys='StatusReport.reviewed_by', backref='reviewer', lazy='dynamic')
+    announcements_posted = db.relationship('Announcement', foreign_keys='Announcement.posted_by', backref='poster', lazy='dynamic')
+    clarification_requests_raised = db.relationship('ClarificationRequest', foreign_keys='ClarificationRequest.raised_by', backref='raiser', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')

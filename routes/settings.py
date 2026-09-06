@@ -9,6 +9,6 @@ settings_bp = Blueprint('settings', __name__, url_prefix='/settings', template_f
 def index():
     if request.method == 'POST':
         # placeholder for user settings: theme, notifications
-        flash('Settings saved', 'success')
+        flash('DeployFlow settings saved', 'success')
         return redirect(url_for('settings.index'))
     return render_template('settings/index.html')

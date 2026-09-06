@@ -23,6 +23,8 @@ class Project(db.Model):
     tasks = db.relationship('Task', backref='project', lazy=True)
     releases = db.relationship('Release', backref='project', lazy=True)
     members = db.relationship('ProjectMember', backref='project', lazy=True)
+    status_reports = db.relationship('StatusReport', backref='project', cascade='all, delete-orphan', lazy='dynamic')
+    announcements = db.relationship('Announcement', backref='project', cascade='all, delete-orphan', lazy='dynamic')
 
     def __repr__(self):
         return f'<Project {self.name}>'

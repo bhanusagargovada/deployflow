@@ -3,8 +3,20 @@ from config import DevelopmentConfig
 from database import db, migrate, bcrypt, login_manager
 from flask import after_this_request
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+except ImportError:  # pragma: no cover - optional dependency fallback for local/test environments
+    class Limiter:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def init_app(self, app):
+            return None
+
+    def get_remote_address():
+        return '127.0.0.1'
 
 
 def create_app(config_class=None):
@@ -34,6 +46,7 @@ def create_app(config_class=None):
         from routes.reports import reports_bp
         from routes.admin import admin_bp
         from routes.comments import comments_bp
+        from routes.collaboration import collaboration_bp
         from routes.notifications import notifications_bp
         from routes.api import api_bp
 
@@ -45,6 +58,7 @@ def create_app(config_class=None):
         app.register_blueprint(reports_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(comments_bp)
+        app.register_blueprint(collaboration_bp)
         app.register_blueprint(notifications_bp)
         app.register_blueprint(api_bp)
         from routes.profile import profile_bp

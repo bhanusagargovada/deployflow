@@ -8,3 +8,8 @@ instance/
 dev.db
 /.migrations
 migrations/versions/*.py
+database.zip
+.pytest_cache/
+run_pytest_capture*.py
+*.log
+zip deployflow.zip 

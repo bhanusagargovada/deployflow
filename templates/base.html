@@ -3,24 +3,58 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Project Tracker{% endblock %}</title>
+    <title>{% block title %}DeployFlow | Intelligent Project &amp; Deployment Management Platform{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-      .theme-toggle { cursor: pointer; }
-    </style>
+    <script>
+      (function () {
+        try {
+          var savedTheme = localStorage.getItem('theme');
+          var theme = savedTheme === 'dark' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.setAttribute('data-bs-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.setAttribute('data-bs-theme', 'light');
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
   </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <body class="{% block body_class %}{% endblock %}">
+    {% from '_partials/brand_logo.html' import brand_logo %}
+    {% if auth_page %}
+    <main class="auth-shell">
+      <div class="container-fluid px-3 px-lg-4 py-4 py-lg-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="auth-flash-stack mb-4">
+              {% for category, msg in messages %}
+                <div class="alert alert-{{ category }} shadow-sm mb-2">{{ msg }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        {% block auth_content %}{% endblock %}
+      </div>
+    </main>
+    {% else %}
+    <nav class="navbar navbar-expand-lg navbar-dark deployflow-navbar">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('dashboard.index') }}">PM & Deployment Tracker</a>
+        {{ brand_logo(url_for('dashboard.index')) }}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
           <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.index') }}">Home</a></li>
+            <li class="nav-item"><button type="button" class="nav-link nav-button" data-bs-toggle="modal" data-bs-target="#aboutModal">About</button></li>
+            <li class="nav-item"><button type="button" class="nav-link nav-button" data-bs-toggle="modal" data-bs-target="#contactModal">Contact</button></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('projects.list_projects') }}">Projects</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('tasks.list_tasks') }}">Tasks</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('releases.list_releases') }}">Releases</a></li>
@@ -36,7 +70,7 @@
             </li>
             <li class="nav-item"><a class="nav-link" href="#">{{ current_user.username }}</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a></li>
-            <li class="nav-item"><a class="nav-link theme-toggle" id="theme-toggle">Theme</a></li>
+            <li class="nav-item"><a class="nav-link theme-toggle" id="theme-toggle" href="#" aria-label="Toggle theme">Theme</a></li>
             {% else %}
             <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
             {% endif %}
@@ -69,10 +103,45 @@
         </main>
       </div>
     </div>
+    <footer class="deployflow-footer py-4">
+      <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>&copy; 2026 DeployFlow. All Rights Reserved.</span>
+        <span>Intelligent Project &amp; Deployment Management Platform</span>
+      </div>
+    </footer>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
+
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal">
+          <div class="modal-header border-0">
+            <h5 class="modal-title">About DeployFlow</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0">DeployFlow is an enterprise project and deployment management platform for planning, collaboration, tracking, and release visibility.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal">
+          <div class="modal-header border-0">
+            <h5 class="modal-title">Contact</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0">Use DeployFlow to coordinate support, reporting, and team communication workflows.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
   </html>

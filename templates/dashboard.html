@@ -1,35 +1,48 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard - Project Tracker{% endblock %}
+{% block title %}DeployFlow | Intelligent Project &amp; Deployment Management Platform{% endblock %}
 {% block content %}
-<div class="row">
+<div class="deployflow-hero card mb-4">
+  <div class="card-body p-4 p-lg-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <span class="deployflow-eyebrow">Welcome to DeployFlow Dashboard</span>
+        <h1 class="deployflow-hero-title">Welcome to DeployFlow Dashboard</h1>
+        <p class="deployflow-hero-subtitle">Plan • Collaborate • Deploy • Track</p>
+      </div>
+      <div class="deployflow-hero-badge">Enterprise Operations</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
   <div class="col-md-3">
-    <div class="card mb-3">
+    <div class="card deployflow-stat-card mb-0">
       <div class="card-body">
-        <h5>Total Projects</h5>
+        <span>Total Projects</span>
         <h3>{{ stats.total_projects }}</h3>
       </div>
     </div>
   </div>
   <div class="col-md-3">
-    <div class="card mb-3">
+    <div class="card deployflow-stat-card mb-0">
       <div class="card-body">
-        <h5>Active Projects</h5>
+        <span>Active Projects</span>
         <h3>{{ stats.active_projects }}</h3>
       </div>
     </div>
   </div>
   <div class="col-md-3">
-    <div class="card mb-3">
+    <div class="card deployflow-stat-card mb-0">
       <div class="card-body">
-        <h5>Pending Tasks</h5>
+        <span>Pending Tasks</span>
         <h3>{{ stats.pending_tasks }}</h3>
       </div>
     </div>
   </div>
   <div class="col-md-3">
-    <div class="card mb-3">
+    <div class="card deployflow-stat-card mb-0">
       <div class="card-body">
-        <h5>Total Users</h5>
+        <span>Total Users</span>
         <h3>{{ stats.total_users }}</h3>
       </div>
     </div>
@@ -55,7 +68,7 @@
 
 <div class="row mt-4">
   <div class="col-md-12">
-    <h5>Recent Releases</h5>
+    <h5 class="deployflow-section-title">Recent Releases</h5>
     <ul class="list-group">
       <li class="list-group-item">No releases yet</li>
     </ul>

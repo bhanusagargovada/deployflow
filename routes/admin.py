@@ -26,7 +26,7 @@ def create_user():
         db.session.add(u)
         db.session.commit()
         record_activity(None, f'admin_created_user:{u.id}', meta=str({'by': 'admin'}))
-        flash('User created.', 'success')
+        flash('DeployFlow user created.', 'success')
         return redirect(url_for('admin.index'))
     return render_template('admin/create.html', form=form)
 
@@ -43,7 +43,7 @@ def edit_user(user_id):
         u.is_active = bool(form.is_active.data)
         db.session.commit()
         record_activity(None, f'admin_updated_user:{u.id}')
-        flash('User updated.', 'success')
+        flash('DeployFlow user updated.', 'success')
         return redirect(url_for('admin.index'))
     return render_template('admin/edit.html', form=form, user=u)
 
@@ -55,7 +55,7 @@ def delete_user(user_id):
     db.session.delete(u)
     db.session.commit()
     record_activity(None, f'admin_deleted_user:{user_id}')
-    flash('User deleted.', 'info')
+    flash('DeployFlow user deleted.', 'info')
     return redirect(url_for('admin.index'))
 
 

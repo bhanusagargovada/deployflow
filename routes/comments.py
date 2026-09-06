@@ -1,13 +1,33 @@
-from flask import Blueprint, request, redirect, url_for, flash, render_template
+import os
+import re
+from uuid import uuid4
+
+from flask import Blueprint, request, redirect, url_for, flash, render_template, current_app
 from flask_login import login_required, current_user
 from forms.comment_forms import CommentForm
 from database import db
-from models.comment import Comment
+from models.comment import Comment, CommentReadReceipt
 from models.task import Task
+from models.user import User
 from services.auth_service import record_activity
 from services.notification_service import create_notification
+from werkzeug.utils import secure_filename
 
 comments_bp = Blueprint('comments', __name__, url_prefix='/comments', template_folder='../templates')
+
+
+def _save_attachment(file_storage):
+    if not file_storage or not file_storage.filename:
+        return None
+
+    upload_dir = os.path.join(current_app.static_folder, 'uploads', 'comments')
+    os.makedirs(upload_dir, exist_ok=True)
+
+    filename = secure_filename(file_storage.filename)
+    stored_name = f'{uuid4().hex}_{filename}'
+    file_path = os.path.join(upload_dir, stored_name)
+    file_storage.save(file_path)
+    return url_for('static', filename=f'uploads/comments/{stored_name}')
 
 
 @comments_bp.route('/create', methods=['POST'])
@@ -19,10 +39,30 @@ def create_comment():
         if not task:
             flash('Task not found', 'danger')
             return redirect(request.referrer or url_for('tasks.list_tasks'))
-        c = Comment(task_id=task.id, user_id=current_user.id, parent_id=form.parent_id.data or None, content=form.content.data)
+
+        attachment_path = _save_attachment(request.files.get('attachment'))
+        c = Comment(
+            task_id=task.id,
+            user_id=current_user.id,
+            parent_id=form.parent_id.data or None,
+            content=form.content.data,
+            attachment_path=attachment_path,
+        )
         db.session.add(c)
         db.session.commit()
         record_activity(current_user, 'create_comment', meta=str({'comment_id': c.id, 'task_id': task.id}))
+
+        mentioned_usernames = set(re.findall(r'@([A-Za-z0-9_.]+)', form.content.data or ''))
+        if mentioned_usernames:
+            mentioned_users = User.query.filter(User.username.in_(mentioned_usernames)).all()
+            for mentioned_user in mentioned_users:
+                if mentioned_user.id != current_user.id:
+                    create_notification(
+                        mentioned_user.id,
+                        f'{current_user.username} mentioned you on task "{task.title}"',
+                        link=url_for('tasks.detail', task_id=task.id),
+                    )
+
         # Notify task assignee
         if task.assigned_to and task.assigned_to != current_user.id:
             create_notification(task.assigned_to, f'New comment on task "{task.title}"', link=url_for('tasks.detail', task_id=task.id))
@@ -30,3 +70,14 @@ def create_comment():
     else:
         flash('Could not post comment', 'danger')
     return redirect(request.referrer or url_for('tasks.list_tasks'))
+
+
+@comments_bp.route('/<int:comment_id>/seen', methods=['POST'])
+@login_required
+def mark_seen(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    receipt = CommentReadReceipt.query.filter_by(comment_id=comment.id, user_id=current_user.id).first()
+    if receipt is None:
+        db.session.add(CommentReadReceipt(comment_id=comment.id, user_id=current_user.id))
+        db.session.commit()
+    return ('', 204)

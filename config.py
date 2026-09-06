@@ -16,6 +16,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///deployflow.db')
 
 
 class TestingConfig(Config):

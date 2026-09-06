@@ -1,4 +1,4 @@
--- MySQL schema for Project Management & Deployment Tracking System
+-- MySQL schema for DeployFlow
 CREATE DATABASE IF NOT EXISTS `project_tracker` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `project_tracker`;
 
@@ -76,9 +76,89 @@ CREATE TABLE IF NOT EXISTS `activity_logs` (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Task comments
+CREATE TABLE IF NOT EXISTS `comments` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `task_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `parent_id` INT NULL,
+  `content` TEXT NOT NULL,
+  `attachment_path` VARCHAR(255),
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Comment read receipts
+CREATE TABLE IF NOT EXISTS `comment_read_receipts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `comment_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `seen_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_comment_read_receipt` (`comment_id`, `user_id`),
+  FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Clarification requests
+CREATE TABLE IF NOT EXISTS `clarification_requests` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `task_id` INT NOT NULL,
+  `raised_by` INT NOT NULL,
+  `assigned_to` INT NULL,
+  `question` TEXT NOT NULL,
+  `answer` TEXT,
+  `status` VARCHAR(32) DEFAULT 'Open',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `resolved_at` DATETIME NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (raised_by) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Status reports
+CREATE TABLE IF NOT EXISTS `status_reports` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `task_id` INT NULL,
+  `project_id` INT NOT NULL,
+  `submitted_by` INT NOT NULL,
+  `report_date` DATE,
+  `work_done` TEXT NOT NULL,
+  `blockers` TEXT,
+  `hours_spent` DECIMAL(10,2),
+  `next_steps` TEXT,
+  `status` VARCHAR(32) DEFAULT 'Pending',
+  `manager_feedback` TEXT,
+  `reviewed_by` INT NULL,
+  `reviewed_at` DATETIME NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Announcements
+CREATE TABLE IF NOT EXISTS `announcements` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `project_id` INT NOT NULL,
+  `posted_by` INT NOT NULL,
+  `message` TEXT NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `pinned` TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (posted_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Indexes for performance
 CREATE INDEX idx_tasks_project_id ON tasks(project_id);
 CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
 CREATE INDEX idx_projects_manager_id ON projects(manager_id);
 CREATE INDEX idx_comments_task_id ON comments(task_id);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_comment_read_receipts_comment_id ON comment_read_receipts(comment_id);
+CREATE INDEX idx_comment_read_receipts_user_id ON comment_read_receipts(user_id);
+CREATE INDEX idx_clarification_requests_task_id ON clarification_requests(task_id);
+CREATE INDEX idx_status_reports_project_id ON status_reports(project_id);
+CREATE INDEX idx_status_reports_task_id ON status_reports(task_id);
+CREATE INDEX idx_announcements_project_id ON announcements(project_id);

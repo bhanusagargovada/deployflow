@@ -22,5 +22,8 @@ class Task(db.Model):
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    comments = db.relationship('Comment', backref='task', cascade='all, delete-orphan', lazy='dynamic')
+    clarification_requests = db.relationship('ClarificationRequest', backref='task', cascade='all, delete-orphan', lazy='dynamic')
+
     def __repr__(self):
         return f'<Task {self.title}>'

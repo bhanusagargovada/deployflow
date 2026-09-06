@@ -21,6 +21,6 @@ def edit_profile():
         current_user.username = form.username.data
         current_user.email = form.email.data
         db.session.commit()
-        flash('Profile updated', 'success')
+        flash('DeployFlow profile updated', 'success')
         return redirect(url_for('profile.view_profile'))
     return render_template('profile/edit.html', form=form)
