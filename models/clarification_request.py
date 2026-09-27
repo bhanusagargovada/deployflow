@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database import db
 
@@ -18,7 +18,7 @@ class ClarificationRequest(db.Model):
     question = db.Column(db.Text, nullable=False)
     answer = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(32), default=ClarificationStatus.OPEN)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at = db.Column(db.DateTime, nullable=True)
 
     assigned_to_user = db.relationship('User', foreign_keys=[assigned_to], lazy='joined')

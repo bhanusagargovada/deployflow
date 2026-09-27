@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, flash, redirect, request, url_for
 from flask_login import current_user, login_required
@@ -25,7 +25,7 @@ collaboration_bp = Blueprint('collaboration', __name__, url_prefix='/collaborati
 
 
 def _task_or_404(task_id):
-    return Task.query.get_or_404(task_id)
+    return db.get_or_404(Task, task_id)
 
 
 @collaboration_bp.route('/clarifications/create', methods=['POST'])
@@ -59,12 +59,12 @@ def create_clarification_request():
 @login_required
 @role_required([Role.ADMIN, Role.PM])
 def answer_clarification_request(request_id):
-    clarification = ClarificationRequest.query.get_or_404(request_id)
+    clarification = db.get_or_404(ClarificationRequest, request_id)
     form = ClarificationAnswerForm()
     if form.validate_on_submit():
         clarification.answer = form.answer.data
         clarification.status = ClarificationStatus.ANSWERED
-        clarification.resolved_at = datetime.utcnow()
+        clarification.resolved_at = datetime.now(timezone.utc)
         db.session.commit()
         if clarification.raised_by != current_user.id:
             create_notification(
@@ -81,11 +81,11 @@ def answer_clarification_request(request_id):
 @collaboration_bp.route('/clarifications/<int:request_id>/close', methods=['POST'])
 @login_required
 def close_clarification_request(request_id):
-    clarification = ClarificationRequest.query.get_or_404(request_id)
+    clarification = db.get_or_404(ClarificationRequest, request_id)
     if current_user.id not in {clarification.raised_by, clarification.assigned_to} and not current_user.is_admin() and current_user.role != Role.PM:
         return ('', 403)
     clarification.status = ClarificationStatus.CLOSED
-    clarification.resolved_at = datetime.utcnow()
+    clarification.resolved_at = datetime.now(timezone.utc)
     db.session.commit()
     flash('Clarification closed.', 'info')
     return redirect(request.referrer or url_for('tasks.detail', task_id=clarification.task_id))
@@ -96,7 +96,7 @@ def close_clarification_request(request_id):
 def create_status_report():
     form = StatusReportForm()
     if form.validate_on_submit():
-        project = Project.query.get_or_404(form.project_id.data)
+        project = db.get_or_404(Project, form.project_id.data)
         report = StatusReport(
             project_id=project.id,
             task_id=form.task_id.data or None,
@@ -125,13 +125,13 @@ def create_status_report():
 @login_required
 @role_required([Role.ADMIN, Role.PM])
 def review_status_report(report_id):
-    report = StatusReport.query.get_or_404(report_id)
+    report = db.get_or_404(StatusReport, report_id)
     form = StatusReportReviewForm()
     if form.validate_on_submit():
         report.status = form.status.data
         report.manager_feedback = form.manager_feedback.data
         report.reviewed_by = current_user.id
-        report.reviewed_at = datetime.utcnow()
+        report.reviewed_at = datetime.now(timezone.utc)
         db.session.commit()
         if report.submitted_by != current_user.id:
             create_notification(
@@ -151,7 +151,7 @@ def review_status_report(report_id):
 def create_announcement():
     form = AnnouncementForm()
     if form.validate_on_submit():
-        project = Project.query.get_or_404(form.project_id.data)
+        project = db.get_or_404(Project, form.project_id.data)
         if current_user.role == Role.PM and project.manager_id not in (None, current_user.id):
             return ('', 403)
         announcement = Announcement(

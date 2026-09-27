@@ -1,5 +1,5 @@
 from database import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class Notification(db.Model):
@@ -9,7 +9,7 @@ class Notification(db.Model):
     message = db.Column(db.String(255))
     link = db.Column(db.String(255))
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<Notification to {self.user_id}: {self.message}>'

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, send_file, abort
-from flask_login import login_required
+from flask_login import login_required, current_user
+from database import db
 from models.project import Project
 from models.task import Task
 from models.release import Release
@@ -15,14 +16,18 @@ reports_bp = Blueprint('reports', __name__, url_prefix='/reports', template_fold
 @reports_bp.route('/')
 @login_required
 def index():
-    return render_template('reports/list.html')
+    if current_user.is_admin():
+        projects = Project.query.order_by(Project.name.asc()).all()
+    else:
+        projects = Project.query.filter_by(manager_id=current_user.id).order_by(Project.name.asc()).all()
+    return render_template('reports/list.html', projects=projects)
 
 
 @reports_bp.route('/project/<int:project_id>/pdf')
 @login_required
 @role_required([Role.ADMIN, Role.PM])
 def project_pdf(project_id):
-    project = Project.query.get_or_404(project_id)
+    project = db.get_or_404(Project, project_id)
     tasks = Task.query.filter_by(project_id=project.id).all()
     releases = Release.query.filter_by(project_id=project.id).all()
     buf = generate_project_report(project, tasks=tasks, releases=releases)
@@ -33,7 +38,7 @@ def project_pdf(project_id):
 @login_required
 @role_required([Role.ADMIN, Role.PM])
 def task_pdf(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.get_or_404(Task, task_id)
     buf = generate_task_report(task)
     return send_file(buf, mimetype='application/pdf', download_name=f'task_{task.id}_report.pdf', as_attachment=True)
 
@@ -42,6 +47,6 @@ def task_pdf(task_id):
 @login_required
 @role_required([Role.ADMIN, Role.PM])
 def release_pdf(release_id):
-    release = Release.query.get_or_404(release_id)
+    release = db.get_or_404(Release, release_id)
     buf = generate_release_report(release)
     return send_file(buf, mimetype='application/pdf', download_name=f'release_{release.id}_report.pdf', as_attachment=True)

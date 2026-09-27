@@ -5,6 +5,7 @@ from models.user import User
 from models.activity import ActivityLog
 from forms.user_forms import UserCreateForm, UserEditForm
 from services.auth_service import record_activity
+from flask_login import current_user
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../templates')
 
@@ -25,7 +26,7 @@ def create_user():
         u.set_password(form.password.data)
         db.session.add(u)
         db.session.commit()
-        record_activity(None, f'admin_created_user:{u.id}', meta=str({'by': 'admin'}))
+        record_activity(current_user, f'admin_created_user:{u.id}', meta=str({'by': 'admin'}))
         flash('DeployFlow user created.', 'success')
         return redirect(url_for('admin.index'))
     return render_template('admin/create.html', form=form)
@@ -34,7 +35,7 @@ def create_user():
 @admin_bp.route('/<int:user_id>/edit', methods=['GET', 'POST'])
 @admin_required
 def edit_user(user_id):
-    u = User.query.get_or_404(user_id)
+    u = db.get_or_404(User, user_id)
     form = UserEditForm(obj=u)
     if form.validate_on_submit():
         u.username = form.username.data
@@ -42,7 +43,7 @@ def edit_user(user_id):
         u.role = form.role.data
         u.is_active = bool(form.is_active.data)
         db.session.commit()
-        record_activity(None, f'admin_updated_user:{u.id}')
+        record_activity(current_user, f'admin_updated_user:{u.id}')
         flash('DeployFlow user updated.', 'success')
         return redirect(url_for('admin.index'))
     return render_template('admin/edit.html', form=form, user=u)
@@ -51,10 +52,10 @@ def edit_user(user_id):
 @admin_bp.route('/<int:user_id>/delete', methods=['POST'])
 @admin_required
 def delete_user(user_id):
-    u = User.query.get_or_404(user_id)
+    u = db.get_or_404(User, user_id)
     db.session.delete(u)
     db.session.commit()
-    record_activity(None, f'admin_deleted_user:{user_id}')
+    record_activity(current_user, f'admin_deleted_user:{user_id}')
     flash('DeployFlow user deleted.', 'info')
     return redirect(url_for('admin.index'))
 

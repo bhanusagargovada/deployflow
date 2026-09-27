@@ -27,6 +27,7 @@
     <div class="mt-2">
       <button class="btn btn-link btn-sm reply-toggle" data-comment-id="{{ c.id }}">Reply</button>
       <form method="post" action="{{ url_for('comments.mark_seen', comment_id=c.id) }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-link btn-sm">Mark seen</button>
       </form>
     </div>
@@ -37,7 +38,7 @@
       {{ form.task_id }}
       <button class="btn btn-primary btn-sm mt-2">Post Reply</button>
     </form>
-    {% for r in c.replies.order_by(c.replies.property.mapper.class_.created_at.asc()) %}
+    {% for r in c.get_replies() %}
       <div class="ms-4 mt-2">
         <strong>{{ r.user.username if r.user else 'User' }}</strong> <small class="text-muted">{{ r.created_at }}</small>
         <div>{{ r.content }}</div>

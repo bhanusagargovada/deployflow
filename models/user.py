@@ -1,6 +1,6 @@
 from database import db, bcrypt, login_manager
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class Role:
@@ -11,7 +11,7 @@ class Role:
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 
 class User(db.Model, UserMixin):
@@ -21,7 +21,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(32), default=Role.MEMBER)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, default=True)
 
     projects = db.relationship('Project', backref='owner', lazy=True)

@@ -12,6 +12,7 @@ class Config:
     MAIL_PORT = int(os.getenv('MAIL_PORT', 25))
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
 
 
 class DevelopmentConfig(Config):

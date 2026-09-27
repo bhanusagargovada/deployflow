@@ -1,5 +1,5 @@
 from database import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ReleaseStatus:
@@ -17,7 +17,9 @@ class Release(db.Model):
     notes = db.Column(db.Text)
     status = db.Column(db.String(32), default=ReleaseStatus.SUCCESS)
     released_by = db.Column(db.Integer, db.ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    releaser = db.relationship('User', foreign_keys=[released_by], lazy='joined')
 
     def __repr__(self):
         return f'<Release {self.version}>'

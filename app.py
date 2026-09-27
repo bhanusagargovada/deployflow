@@ -1,8 +1,11 @@
 from flask import Flask
 from config import DevelopmentConfig
 from database import db, migrate, bcrypt, login_manager
-from flask import after_this_request
+from flask import after_this_request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
 
 try:
     from flask_limiter import Limiter
@@ -31,48 +34,42 @@ def create_app(config_class=None):
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
 
     # Rate limiting (in-memory storage by default)
     limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour", "10 per minute"])
     limiter.init_app(app)
 
     # Register blueprints
-    try:
-        from routes.auth import auth_bp
-        from routes.dashboard import dashboard_bp
-        from routes.projects import projects_bp
-        from routes.tasks import tasks_bp
-        from routes.releases import releases_bp
-        from routes.reports import reports_bp
-        from routes.admin import admin_bp
-        from routes.comments import comments_bp
-        from routes.collaboration import collaboration_bp
-        from routes.notifications import notifications_bp
-        from routes.api import api_bp
+    from routes.auth import auth_bp
+    from routes.dashboard import dashboard_bp
+    from routes.projects import projects_bp
+    from routes.tasks import tasks_bp
+    from routes.releases import releases_bp
+    from routes.reports import reports_bp
+    from routes.admin import admin_bp
+    from routes.comments import comments_bp
+    from routes.collaboration import collaboration_bp
+    from routes.notifications import notifications_bp
+    from routes.api import api_bp
+    from routes.profile import profile_bp
+    from routes.settings import settings_bp
+    from routes.exports import exports_bp
 
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(dashboard_bp)
-        app.register_blueprint(projects_bp)
-        app.register_blueprint(tasks_bp)
-        app.register_blueprint(releases_bp)
-        app.register_blueprint(reports_bp)
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(comments_bp)
-        app.register_blueprint(collaboration_bp)
-        app.register_blueprint(notifications_bp)
-        app.register_blueprint(api_bp)
-        from routes.profile import profile_bp
-        from routes.settings import settings_bp
-        app.register_blueprint(profile_bp)
-        app.register_blueprint(settings_bp)
-        from routes.exports import exports_bp
-        app.register_blueprint(exports_bp)
-    except Exception:
-        # Blueprints may be added later during development
-        pass
-
-    # error handlers
-    from flask import render_template
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(projects_bp)
+    app.register_blueprint(tasks_bp)
+    app.register_blueprint(releases_bp)
+    app.register_blueprint(reports_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(comments_bp)
+    app.register_blueprint(collaboration_bp)
+    app.register_blueprint(notifications_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(settings_bp)
+    app.register_blueprint(exports_bp)
 
     # Security headers
     @app.after_request
@@ -91,5 +88,14 @@ def create_app(config_class=None):
     @app.errorhandler(404)
     def not_found(e):
         return render_template('404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        db.session.rollback()
+        return render_template('500.html'), 500
+
+    @app.errorhandler(403)
+    def forbidden_error(e):
+        return render_template('403.html'), 403
 
     return app

@@ -23,7 +23,7 @@ def unread_count():
 @notifications_bp.route('/<int:notif_id>/mark_read', methods=['POST'])
 @login_required
 def mark_read(notif_id):
-    n = Notification.query.get_or_404(notif_id)
+    n = db.get_or_404(Notification, notif_id)
     if n.user_id != current_user.id:
         return ('', 403)
     n.is_read = True

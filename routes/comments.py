@@ -16,8 +16,17 @@ from werkzeug.utils import secure_filename
 comments_bp = Blueprint('comments', __name__, url_prefix='/comments', template_folder='../templates')
 
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt', 'doc', 'docx'}
+
+
+def _allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 def _save_attachment(file_storage):
     if not file_storage or not file_storage.filename:
+        return None
+    if not _allowed_file(file_storage.filename):
         return None
 
     upload_dir = os.path.join(current_app.static_folder, 'uploads', 'comments')
@@ -35,12 +44,17 @@ def _save_attachment(file_storage):
 def create_comment():
     form = CommentForm()
     if form.validate_on_submit():
-        task = Task.query.get(form.task_id.data)
+        task = db.session.get(Task, form.task_id.data)
         if not task:
             flash('Task not found', 'danger')
             return redirect(request.referrer or url_for('tasks.list_tasks'))
 
-        attachment_path = _save_attachment(request.files.get('attachment'))
+        attachment = request.files.get('attachment')
+        attachment_path = _save_attachment(attachment)
+        if attachment and attachment.filename and not attachment_path:
+            flash('Unsupported file type. Allowed: png, jpg, jpeg, gif, pdf, txt, doc, docx', 'danger')
+            return redirect(request.referrer or url_for('tasks.list_tasks'))
+
         c = Comment(
             task_id=task.id,
             user_id=current_user.id,
@@ -75,7 +89,7 @@ def create_comment():
 @comments_bp.route('/<int:comment_id>/seen', methods=['POST'])
 @login_required
 def mark_seen(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
+    comment = db.get_or_404(Comment, comment_id)
     receipt = CommentReadReceipt.query.filter_by(comment_id=comment.id, user_id=current_user.id).first()
     if receipt is None:
         db.session.add(CommentReadReceipt(comment_id=comment.id, user_id=current_user.id))

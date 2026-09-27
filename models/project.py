@@ -1,5 +1,5 @@
 from database import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ProjectStatus:
@@ -18,7 +18,7 @@ class Project(db.Model):
     deadline = db.Column(db.Date)
     status = db.Column(db.String(32), default=ProjectStatus.PLANNED)
     manager_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     tasks = db.relationship('Task', backref='project', lazy=True)
     releases = db.relationship('Release', backref='project', lazy=True)

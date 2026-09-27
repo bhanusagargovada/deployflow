@@ -54,7 +54,10 @@ def create_project():
 @projects_bp.route('/<int:project_id>/edit', methods=['GET', 'POST'])
 @role_required([Role.ADMIN, Role.PM])
 def edit_project(project_id):
-    p = Project.query.get_or_404(project_id)
+    p = db.get_or_404(Project, project_id)
+    if not current_user.is_admin() and p.manager_id != current_user.id:
+        flash('Project Managers may modify only projects they manage.', 'danger')
+        return redirect(url_for('projects.list_projects'))
     form = ProjectForm(obj=p)
     if form.validate_on_submit():
         form.populate_obj(p)
@@ -67,7 +70,10 @@ def edit_project(project_id):
 @projects_bp.route('/<int:project_id>/delete', methods=['POST'])
 @role_required([Role.ADMIN, Role.PM])
 def delete_project(project_id):
-    p = Project.query.get_or_404(project_id)
+    p = db.get_or_404(Project, project_id)
+    if not current_user.is_admin() and p.manager_id != current_user.id:
+        flash('Project Managers may delete only projects they manage.', 'danger')
+        return redirect(url_for('projects.list_projects'))
     db.session.delete(p)
     db.session.commit()
     flash('Project deleted', 'info')

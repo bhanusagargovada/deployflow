@@ -1,7 +1,7 @@
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def generate_project_report(project, tasks=None, releases=None):
@@ -11,7 +11,7 @@ def generate_project_report(project, tasks=None, releases=None):
     c.setFont('Helvetica-Bold', 16)
     c.drawString(40, height - 40, f'Project Report: {project.name}')
     c.setFont('Helvetica', 10)
-    c.drawString(40, height - 60, f'Generated: {datetime.utcnow().isoformat()} UTC')
+    c.drawString(40, height - 60, f'Generated: {datetime.now(timezone.utc).isoformat()} UTC')
 
     y = height - 100
     c.setFont('Helvetica-Bold', 12)

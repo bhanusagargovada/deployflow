@@ -6,7 +6,8 @@ from database import db
 from forms.task_forms import TaskForm
 from services.auth_service import record_activity
 from utils.permissions import role_required
-from models.user import Role
+from models.user import Role, User
+from models.project_member import ProjectMember
 from sqlalchemy import or_
 
 tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks', template_folder='../templates')
@@ -38,22 +39,97 @@ def list_tasks():
 @role_required([Role.ADMIN, Role.PM])
 def create_task():
     form = TaskForm()
+
+    if current_user.is_admin():
+        allowed_projects = Project.query.order_by(Project.name.asc()).all()
+    else:
+        allowed_projects = Project.query.filter_by(manager_id=current_user.id).order_by(Project.name.asc()).all()
+
+    if not allowed_projects:
+        flash('No projects available. Please create a project first.', 'warning')
+        return redirect(url_for('projects.list_projects'))
+
+    form.project_id.choices = [(p.id, p.name) for p in allowed_projects]
+
+    # Determine currently selected project
+    selected_project_id = None
+    if request.method == 'POST':
+        selected_project_id = request.form.get('project_id', type=int)
+    if not selected_project_id:
+        req_pid = request.args.get('project_id', type=int)
+        if req_pid and any(p.id == req_pid for p in allowed_projects):
+            selected_project_id = req_pid
+        elif allowed_projects:
+            selected_project_id = allowed_projects[0].id
+
+    if selected_project_id:
+        form.project_id.data = selected_project_id
+
+    # Populate assigned_to with active Team Members belonging to the selected project
+    members = []
+    if selected_project_id:
+        members = (
+            User.query.join(ProjectMember, ProjectMember.user_id == User.id)
+            .filter(
+                ProjectMember.project_id == selected_project_id,
+                User.is_active == True,
+                User.role == Role.MEMBER,
+            )
+            .order_by(User.username.asc())
+            .all()
+        )
+    form.assigned_to.choices = [(0, 'Unassigned')] + [(m.id, f"{m.username} ({m.email})") for m in members]
+
     if form.validate_on_submit():
-        t = Task(title=form.title.data, description=form.description.data,
-                 priority=form.priority.data, deadline=form.deadline.data,
-                 assigned_to=form.assigned_to.data, progress=form.progress.data)
+        project = db.session.get(Project, form.project_id.data)
+        if not project:
+            flash('Selected project does not exist.', 'danger')
+            return render_template('tasks/add.html', form=form)
+
+        # Rule 4 & 5: Project Managers may modify only projects they manage.
+        if not current_user.is_admin() and project.manager_id != current_user.id:
+            flash('Project Managers may modify only projects they manage.', 'danger')
+            return redirect(url_for('tasks.list_tasks'))
+
+        # Rule 3: A Task may only be assigned to an active Team Member who is a member of the selected Project.
+        assigned_to_id = form.assigned_to.data if form.assigned_to.data and form.assigned_to.data > 0 else None
+        if assigned_to_id:
+            is_valid_member = (
+                User.query.join(ProjectMember, ProjectMember.user_id == User.id)
+                .filter(
+                    ProjectMember.project_id == project.id,
+                    User.id == assigned_to_id,
+                    User.is_active == True,
+                    User.role == Role.MEMBER,
+                )
+                .first()
+            )
+            if not is_valid_member:
+                flash('A Task may only be assigned to an active Team Member who is a member of the selected Project.', 'danger')
+                return render_template('tasks/add.html', form=form)
+
+        t = Task(
+            title=form.title.data,
+            description=form.description.data,
+            priority=form.priority.data,
+            deadline=form.deadline.data,
+            project_id=project.id,
+            assigned_to=assigned_to_id,
+            progress=form.progress.data or 0,
+        )
         db.session.add(t)
         db.session.commit()
-        record_activity(current_user, 'create_task', meta=str({'task_id': t.id}))
+        record_activity(current_user, 'create_task', meta=str({'task_id': t.id, 'project_id': project.id}))
         flash('Task created', 'success')
         return redirect(url_for('tasks.list_tasks'))
+
     return render_template('tasks/add.html', form=form)
 
 
 @tasks_bp.route('/<int:task_id>')
 @login_required
 def detail(task_id):
-    t = Task.query.get_or_404(task_id)
+    t = db.get_or_404(Task, task_id)
     # load comments
     from models.comment import Comment, CommentReadReceipt
     from models.clarification_request import ClarificationRequest

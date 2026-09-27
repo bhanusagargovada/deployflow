@@ -8,5 +8,7 @@ class ProjectMember(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     role = db.Column(db.String(64), default='Member')
 
+    user = db.relationship('User', foreign_keys=[user_id], lazy='joined')
+
     def __repr__(self):
         return f'<ProjectMember project={self.project_id} user={self.user_id}>'

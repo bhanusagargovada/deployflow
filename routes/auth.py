@@ -70,6 +70,11 @@ def _handle_role_login(role_key=None):
             login_user(user, remember=form.remember.data)
             flash('Logged in successfully', 'success')
             next_page = request.args.get('next')
+            if next_page:
+                from urllib.parse import urlsplit
+                parsed = urlsplit(next_page)
+                if parsed.netloc or parsed.scheme:
+                    next_page = None
             return redirect(next_page or url_for('dashboard.index'))
         flash('Invalid credentials.', 'danger')
 
@@ -105,9 +110,13 @@ def register():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         db.session.add(user)
-        db.session.commit()
-        flash('Account created. You can now sign in to DeployFlow.', 'success')
-        return redirect(url_for('auth.login'))
+        try:
+            db.session.commit()
+            flash('Account created. You can now sign in to DeployFlow.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception:
+            db.session.rollback()
+            flash('An error occurred during registration. Please try again.', 'danger')
     return render_template('auth/register.html', form=form)
 
 

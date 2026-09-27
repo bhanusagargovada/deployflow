@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database import db
 
@@ -16,7 +16,7 @@ class StatusReport(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     submitted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    report_date = db.Column(db.Date, default=lambda: datetime.utcnow().date())
+    report_date = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
     work_done = db.Column(db.Text, nullable=False)
     blockers = db.Column(db.Text, nullable=True)
     hours_spent = db.Column(db.Float, nullable=True)

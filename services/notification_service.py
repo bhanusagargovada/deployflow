@@ -9,14 +9,14 @@ def create_notification(user_id, message, link=None):
     db.session.add(n)
     db.session.commit()
     # send email if user has email configured
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if user and user.email:
         send_email('DeployFlow Notification', [user.email], f'{message}\n\nOpen: {link or ""}')
     return n
 
 
 def send_digest(user_id):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user or not user.email:
         return None
     notes = Notification.query.filter_by(user_id=user_id, is_read=False).order_by(Notification.created_at.asc()).all()

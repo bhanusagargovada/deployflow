@@ -20,7 +20,7 @@
     <tr>
       <td><a href="{{ url_for('tasks.detail', task_id=t.id) }}">{{ t.title }}</a></td>
       <td>{{ t.project.name if t.project else '—' }}</td>
-      <td>{{ t.assigned_to }}</td>
+      <td>{{ t.assignee.username if t.assignee else 'Unassigned' }}</td>
       <td>{{ t.status }}</td>
     </tr>
     {% else %}
